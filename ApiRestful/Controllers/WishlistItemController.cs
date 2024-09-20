@@ -1,6 +1,7 @@
 ﻿using ApiRestful.Context;
 using ApiRestful.DTOs;
 using ApiRestful.Entities;
+using ApiRestful.Services;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -14,69 +15,34 @@ namespace ApiRestful.Controllers
     [ApiController]
     public class WishlistItemController : ControllerBase
     {
-
-        private readonly AppDbContext _context;
-        public WishlistItemController(AppDbContext context)
+        private readonly WishlistItemService _wishlistItemService;
+        public WishlistItemController(WishlistItemService wishlistItemService)
         {
-            _context = context;
+            _wishlistItemService = wishlistItemService;
         }
 
         [HttpPost]
         [Route("save")]
         public async Task<ActionResult<WishlistItemDTO>> Save(WishlistItemDTO wishlistItemDto)
         {
-            try
+            var result = await _wishlistItemService.Save(wishlistItemDto);
+            if (!result.IsSuccess)
             {
-                // Verificar si el ProductId existe en la tabla Products
-                var productExists = await _context.Products.AnyAsync(p => p.ProductId == wishlistItemDto.ProductId);
-                if (!productExists)
-                {
-                    return NotFound(new { message = $"Producto con ID {wishlistItemDto.ProductId} no encontrado." });
-                }
-
-                var wishlistDB = new WishlistItem
-                {
-                    Id = wishlistItemDto.Id,
-                    UserId = wishlistItemDto.UserId,
-                    ProductId = wishlistItemDto.ProductId
-                };
-
-                await _context.WishlistItems.AddAsync(wishlistDB);
-                await _context.SaveChangesAsync();
-
-                return Ok(new { message = "Wishlist item added successfully.", wishlistItem = wishlistDB });
+                return NotFound(new { message = result.Message });
             }
-            catch (DbUpdateException ex)
-            {
-                var sqlException = ex.InnerException as SqlException;
-
-                if (sqlException != null)
-                {
-                    Console.WriteLine(sqlException.Message);
-                    return StatusCode(500, new { message = "An error occurred while saving the wishlist item.", details = sqlException.Message });
-                }
-                return StatusCode(500, new { message = "An unexpected error occurred." });
-            }
+            return Ok(new { message = result.Message, wishlistItem = result.WishlistItem });
         }
 
         [HttpDelete]
         [Route("delete/{id}")]
         public async Task<ActionResult<WishlistItemDTO>> Delete(int id)
         {
-            try
+            var result = await _wishlistItemService.Delete(id);
+            if (!result.IsSuccess)
             {
-                var WishlistItemDB = await _context.WishlistItems.FindAsync(id);
-                if (WishlistItemDB == null)
-                {
-                    return StatusCode(500, new { message = $"Wish list Items con ID {id} no encontrado." });
-                }
-
-                return Ok(new { message = $"Wish list Items with ID {id} deleted successfully." });
+                return NotFound(new { message = result.Message });
             }
-            catch (DbUpdateException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return Ok(new { message = result.Message });
         }
     }
 }

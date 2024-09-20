@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ApiRestful.Context;
 using ApiRestful.DTOs;
 using ApiRestful.Entities;
+using ApiRestful.Services;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -12,9 +13,9 @@ namespace ApiRestful.Controllers
     [ApiController]
     public class CategorysController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        public CategorysController(AppDbContext context) {
-            _context = context;
+        private readonly CategoryService _categoryService;
+        public CategorysController(CategoryService categoryService) {
+            _categoryService = categoryService;
         }
 
         // GET: api/<CategorysController>
@@ -22,18 +23,7 @@ namespace ApiRestful.Controllers
         [Route("list")]
         public async Task<ActionResult<List<CategoryDTO>>> Get()
         {
-            var listDto = new List<CategoryDTO>();
-            var listDB = await _context.Categories.ToListAsync();
-
-            foreach (var category in listDB)
-            {
-                listDto.Add(new CategoryDTO
-                {
-                    CategoryId = category.CategoryId,
-                    Name = category.Name,
-                });
-            }
-            return Ok(listDto);
+            return Ok(await _categoryService.GetAll());
         }
 
         // GET api/<CategorysController>/5
@@ -46,18 +36,9 @@ namespace ApiRestful.Controllers
         // POST api/<CategorysController>
         [HttpPost]
         [Route("save")]
-
         public async Task<ActionResult<CategoryDTO>> Save(CategoryDTO categoryDto)
         {
-            var categoryDB = new Category
-            {
-                Name = categoryDto.Name
-            };
-
-            await _context.Categories.AddAsync(categoryDB);
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Product added successfully.", category = categoryDB });
-
+            return Ok(await _categoryService.Save(categoryDto));
         }
 
         // PUT api/<CategorysController>/5

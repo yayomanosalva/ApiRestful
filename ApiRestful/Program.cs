@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ApiRestful.Context;
+using ApiRestful.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +15,10 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ConexionSql"))
 );
+
+builder.Services.AddScoped<CategoryService>();
+builder.Services.AddScoped<WishlistItemService>();
+builder.Services.AddScoped<ProductService>();
 
 var app = builder.Build();
 

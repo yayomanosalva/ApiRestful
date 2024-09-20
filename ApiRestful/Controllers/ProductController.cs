@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using ApiRestful.Context;
 using ApiRestful.DTOs;
 using ApiRestful.Entities;
+using ApiRestful.Services;
 using System.Linq;
 
 namespace ApiRestful.Controllers
@@ -13,53 +14,29 @@ namespace ApiRestful.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        public ProductController(AppDbContext context)
+        private readonly ProductService _productService;
+        public ProductController(ProductService productService)
         {
-            _context = context;
+            _productService = productService;
         }
 
         [HttpGet]
         [Route("list")]
         public async Task<ActionResult<List<ProductDTO>>> Get()
         {
-            var listDto = new List<ProductDTO>();
-            var listDB = await _context.Products.ToListAsync();
-
-            foreach (var product in listDB)
-            {
-                listDto.Add(new ProductDTO
-                {
-                    ProductId = product.ProductId,
-                    Name = product.Name,
-                    Description = product.Description,
-                    Price = product.Price,
-                    CategoryId = product.CategoryId,
-                });
-            }
-            return Ok(listDto);
+            return Ok( await _productService.GetAll());
         }
 
         [HttpGet]
         [Route("detail/{sendId}")]
         public async Task<ActionResult<ProductDTO>> Get(int sendId)
         {
-            var productDto = new ProductDTO();
-            var productDB = await _context.Products.Include(p => p.Category)
-                                  .Where(e => e.ProductId == sendId)
-                                  .FirstOrDefaultAsync();
-
-            if (productDB == null)
+            var result = await _productService.GetOne(sendId);
+            if (!result.IsSuccess)
             {
-                return NotFound(new { message = $"Producto con ID {sendId} no encontrado." });
+                return NotFound(new { message = result.Message });
             }
-
-            productDto.ProductId = productDB.ProductId;
-            productDto.Name = productDB.Name;
-            productDto.Description = productDB.Description;
-            productDto.Price = productDB.Price;
-
-            return Ok(new { message = "product added successfully.", product = productDto });
+            return Ok(new { message = result.Message, result.Product });
         }
 
         [HttpPost]
@@ -67,25 +44,12 @@ namespace ApiRestful.Controllers
 
         public async Task<ActionResult<ProductDTO>> Save(ProductDTO productDto)
         {
-            try
+            var result = await _productService.Save(productDto);
+            if (!result.IsSuccess)
             {
-                var productDB = new Product
-                {
-                    Name = productDto.Name,
-                    Description = productDto.Description,
-                    Price = productDto.Price,
-                    CategoryId = productDto.CategoryId,
-                };
-
-                await _context.Products.AddAsync(productDB);
-                await _context.SaveChangesAsync();
-                return Ok(new { message = "Product added successfully.", product = productDB });
+                return NotFound(new { message = result.Message });
             }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-
+            return Ok(new { message = result.Message, wishlistItem = result.productDto });
         }
     }
 }
