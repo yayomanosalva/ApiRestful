@@ -1,10 +1,9 @@
-﻿namespace ApiRestful.Entities
+﻿namespace ApiRestful.DTOs
 {
-    public class User
+    public class UserDTO
     {
         public int UserId { get; set; }
         public string Username { get; set; }
         public string Email { get; set; }
-        public ICollection<WishlistItem> WishlistItems { get; set; }
     }
 }

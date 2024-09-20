@@ -4,3 +4,24 @@ GET {{ApiRestful_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+GET {{ApiRestful_HostAddress}}/api/categorys/list
+
+###
+
+GET {{ApiRestful_HostAddress}}/api/categorys/0
+
+###
+
+POST {{ApiRestful_HostAddress}}/api/categorys/save
+Content-Type: application/json
+
+{
+  //CategoryDTO
+}
+
+###
+
+DELETE {{ApiRestful_HostAddress}}/api/wishlistitem/delete/0
+
+###
